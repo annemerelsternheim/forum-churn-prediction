@@ -226,7 +226,7 @@ def compare_variables(pp,user,nr_of_posts,mean_quest,mean_object,mean_sents,mean
 		pp.savefig(fig, dpi = 300, transparent = True)
 
 ###############################################
-# ------------------- code -------------------
+# -------------------- code -------------------
 ###############################################
 
 PTD = make_P_T_and_D(topics,posts) 
