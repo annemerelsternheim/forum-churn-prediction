@@ -32,9 +32,6 @@ def time_shift_data(data, n_in=1, n_out=1, dropnan=True):
 	if dropnan:
 		agg.dropna(inplace=True)
 	return agg
-
-
-
 ## name and main variables are set once the file is run as 'main' function (e.g. in command line)
 ## the main check ensures that you can only execute the code as main function, not when called from another function.
 if __name__=="__main__":
