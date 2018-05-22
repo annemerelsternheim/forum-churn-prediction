@@ -10,6 +10,7 @@ from sklearn.metrics import roc_curve, auc, recall_score, precision_score,mean_a
 files = []
 path = "C:\Users\sternheimam\Desktop\my-notebook\user-csvs_predictions"
 
+
 print "Loading..."
 for filename in tqdm(os.listdir(path)):
     files.append(pd.read_csv(os.path.join(path, filename)))
