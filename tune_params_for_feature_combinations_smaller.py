@@ -50,33 +50,47 @@ def Balance_Data(data, dependent):
 	positives = data[(data[dependent]==1)]
 	negatives = data.drop(positives.index).sample(n=len(positives))
 	balanced_data = pd.concat([positives,negatives])
-	return balanced_data	
+	return balanced_data
+	
+def Shrink_data(data,dependent):
+	""" This function takes a data set and returns a smaller version of it, preserving the 1:0 ratio """
+	print "Shrinking data..."
+	positives = data[(data[dependent]==1)].sample(frac=0.05)
+	negatives = data.drop(positives.index).sample(frac=0.05)
+	shrunk_data = pd.concat([positives,negatives])
+	return shrunk_data
+	
+def Shuffle_Data(data,dependent):
+	""" This function shuffles the samples, without removing any."""
+	print "Shuffling data..."
+	shuffled_data = data.sample(frac=1)
+	return shuffled_data
+	
 	
 def Do_grid_search(train_X,train_y):
 	""" function needs the X and y parts of the training data."""
 	print "Searching for the optimal set of parameters... (can take several minutes!)"
 	neg = float(sum([1 for y in train_y if y==0]))
-	print neg
 	pos = float(sum([1 for y in train_y if y==1]))
-	print pos
 	parameters = {'objective':['binary:logistic'],
 				  'learning_rate': [0.05,0.1,0.2], #so called `eta` value
 				  'max_depth': [4,6,8], 'silent': [True],
 				  'n_estimators': [800],
-				  'scale_pos_weight': [neg/pos]}
+				  'scale_pos_weight': [neg/pos],
+				  'n_jobs': [-1]}
 				  
 	print "the ratio negative to positive samples is %.4f" %(neg/pos)
 			  
 	clf = GridSearchCV(xgb.XGBClassifier(), #the estimator object
 					   parameters, #the parameter grid
-					   cv=StratifiedKFold(n_splits=10, shuffle=True).split(train_X,train_y), 
-					   scoring='roc_auc')
+					   cv=StratifiedKFold(n_splits=5, shuffle=True).split(train_X,train_y), 
+					   scoring='roc_auc', verbose = True)
 	clf.fit(train_X, train_y)
 	return clf
 
 def Split_data(train_index,test_index, X,y):
 	""" function needs the train and test indexes (together with the to-be-splitted X and y), and will return test and training sets of both X and y."""
-	print "Separating X from y..."
+	#print "Separating X from y..."
 	X = X.reset_index(drop=True)
 	y = y.reset_index(drop=True)
 	
@@ -85,6 +99,7 @@ def Split_data(train_index,test_index, X,y):
 	train_y = y.drop(test_index)
 	test_y = y.drop(train_index)
 	return(train_X,test_X,train_y,test_y)
+	
 
 ######################################################################
 # MAIN
@@ -96,7 +111,7 @@ path_out = "C:\Users\sternheimam\Desktop\my-notebook"
 #feature_names = ["inactivity","questions","sentences","sentiment","subjectivity","words",
 #                 "sentence mean","word mean", "inactive mean","questions mean","sentiment mean","subjectivity mean"]
 feature_groups = [(3,11),(13,14),(6,7),(9,10,12),(4,5,8)] # inactivity, opinionmining past, opinionmining, textual past, textual
-dependent_variables = [0,1,2]
+dependent_variables = [1,2]
 
 # get the data from the files
 data = Get_data(path_in) # all files
@@ -108,10 +123,13 @@ with tqdm(total=93) as pbar:
 	# for all dependent variables (0,1,2: 1 2 or 3 months churn)
 	for var in dependent_variables:
 		column_values = []
-		# balance the data
-		balanced_data = Balance_Data(data,var) # all positive samples, and equally many negative samples
+		# shrink the data for manageable run times
+		shrunk_data = Shrink_data(data,var)
+		# balance or just shuffle the data
+		#modified_data = Balance_Data(data,var) # all positive samples, and equally many negative samples
+		modified_data = Shuffle_Data(shrunk_data,var) # all samples, in random order
 		# the dependent variable is the column from the data which has that dependent var name (0,1 or 2)
-		dependent_var = balanced_data[var]
+		dependent_var = modified_data[var]
 		
 		# generate all possible combinations of independent-var groups
 		for size in range(len(feature_groups)+1):
@@ -123,7 +141,7 @@ with tqdm(total=93) as pbar:
 					# add columns to it: you had already saved the dependent variable, the others are extracted from the training data
 					for tup in combi:
 						for feature in tup:
-							frame[feature] = balanced_data[feature]
+							frame[feature] = modified_data[feature]
 					# the dependent and independent variables of the data frame are now collected
 					# rename and reindex them
 					X = frame.reset_index(drop=True)
@@ -141,15 +159,22 @@ with tqdm(total=93) as pbar:
 					optimal_params = best_classifier.get_params()
 					all_auc = []
 					# split the rest-data in ten folds
-					ss = ShuffleSplit(n_splits=10)
+					ss = ShuffleSplit(n_splits=5)
 					for train_index, test_index in ss.split(rest_X):
 					# split training from testing set
 						train_X,test_X,train_y,test_y = Split_data(train_index,test_index,rest_X,rest_y)
+						# het kan gebeuren dat de split precies zo is dat er geen 1en in de y zitten. Dan kan de AUC niet berekend worden
+						
 						# train the best classifier (determined by grid search) on the training part of the rest-data
 						best_classifier.fit(train_X,train_y,eval_metric="auc")
 						# and test its predictive accuracy on the test part of the rest-data
 						y_probabilities = best_classifier.predict_proba(test_X)[:,1] # array containing the probability that dependent_var==1
-						auc = roc_auc_score(test_y,y_probabilities)
+						if sum(test_y)>0 and sum(test_y)!=len(test_y):
+							auc = roc_auc_score(test_y,y_probabilities)
+						else:
+							print "auc score can not be calculated because test_y contains only zeroes or ones:",
+							print sum (test_y)
+							auc = float('NaN')
 						# append the score to a list that will contain all auc scores for this particular 10-fold-run
 						all_auc.append(auc)
 					# 10-fold has now finished. Append all_auc to a list containing all scores for the current dependent variable
@@ -159,7 +184,8 @@ with tqdm(total=93) as pbar:
 		# name the column, and add it to the super dataframe / matrix
 		column_name = "Churn in %s months" %(int(var)+1)
 		The_Matrix[column_name]=column_values
-	The_Matrix.to_csv(os.path.join(path_out,"testMATRIX.csv"),index=False,sep=";")
+		The_Matrix.to_csv(os.path.join(path_out,"testMATRIX3.csv"),index=False,sep=";")
+	The_Matrix.to_csv(os.path.join(path_out,"testMATRIX3.csv"),index=False,sep=";")
 
 
 

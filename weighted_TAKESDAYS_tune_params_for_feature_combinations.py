@@ -50,7 +50,13 @@ def Balance_Data(data, dependent):
 	positives = data[(data[dependent]==1)]
 	negatives = data.drop(positives.index).sample(n=len(positives))
 	balanced_data = pd.concat([positives,negatives])
-	return balanced_data	
+	return balanced_data
+	
+def Shuffle_Data(data,dependent):
+	print "Shuffling data..."
+	shuffled_data = data.sample(frac=1)
+	return shuffled_data
+	
 	
 def Do_grid_search(train_X,train_y):
 	""" function needs the X and y parts of the training data."""
@@ -95,8 +101,8 @@ path_out = "C:\Users\sternheimam\Desktop\my-notebook"
 
 #feature_names = ["inactivity","questions","sentences","sentiment","subjectivity","words",
 #                 "sentence mean","word mean", "inactive mean","questions mean","sentiment mean","subjectivity mean"]
-feature_groups = [(3,11),(13,14),(6,7),(9,10,12),(4,5,8)] # inactivity, opinionmining past, opinionmining, textual past, textual
-dependent_variables = [0,1,2]
+feature_groups = [(3,11)]#,(13,14),(6,7),(9,10,12),(4,5,8)] # inactivity, opinionmining past, opinionmining, textual past, textual
+dependent_variables = [0]#,1,2]
 
 # get the data from the files
 data = Get_data(path_in) # all files
@@ -109,7 +115,8 @@ with tqdm(total=93) as pbar:
 	for var in dependent_variables:
 		column_values = []
 		# balance the data
-		balanced_data = Balance_Data(data,var) # all positive samples, and equally many negative samples
+		#balanced_data = Balance_Data(data,var) # all positive samples, and equally many negative samples
+		balanced_data = Shuffle_Data(data,var) # all samples, in random order
 		# the dependent variable is the column from the data which has that dependent var name (0,1 or 2)
 		dependent_var = balanced_data[var]
 		
