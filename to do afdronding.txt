@@ -1,0 +1,22 @@
++ maak flow chart voor annotatie
+- maak flow chart voor dataverwerking
+- maak flow chart-ig iets voor data (zie p 3 Karnstedt2011)
+- vervang _b door _r in paper en figuren
+- vervang figuren door nieuwe figuren (met I O T etc)
+
+? wat  is de juiste / verstandige manier om mijn resultaten te bespreken?
+Ik heb nu 1) gebalanceerde test 2) gewogen test (10fold en 5fold - grooote SD ivm weinig 1en) 3) ongebalanceerde test
+? zit er voldoende background in de background sectie?
+
+appendix / sectie how to handle unbalanced data
+
+enorm gebalanceerd drie opties namelijk...
+niet helemaal eerlijk om t op gebalanceerde data te voorspellen
+resultaat is vergelijkbaar op ongebalanceerde data
+performance hangt niet af van testset
+
+doelbinding: petienten met data privacy etc etc
+social engagement van patienten
+garanderen dat we als arts van deze bron gebruik moeten maken
+patient generated social media data
+repo aanmaken op git

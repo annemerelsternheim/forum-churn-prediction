@@ -122,19 +122,19 @@ The_Matrix = pd.DataFrame()
 
 with tqdm(total=93) as pbar:
 	# get all data. select 25% of it as a test set. Use later.
-	test_data = data.sample(frac=.25)
-	train_data = data.drop(test_data.index) # definitely NOT the same as train_set !!!
+	rest_data = data.sample(frac=.25)
+	development_data = data.drop(rest_data.index)
 	#print test_data.head()
 	
 	for var in dependent_variables:
 		column_values = []
 		#now, for all churn columns, ***BALANCE*** the train data
-		balanced_data = Balance_Data(train_data,var) # all positive samples, and equally many negative samples
+		balanced_data = Balance_Data(development_data,var) # all positive samples, and equally many negative samples
 		# the dependent variable is the column from the data which has that dependent var name (0,1 or 2)
 		dependent_var = balanced_data[var]
 		
 		# drop irrelevant columns in rest data as well
-		rest_y = test_data[var].reset_index(drop=True)
+		rest_y = rest_data[var].reset_index(drop=True)
 		
 		# generate all possible combinations of independent-var groups
 		for size in range(len(feature_groups)+1):
@@ -149,13 +149,17 @@ with tqdm(total=93) as pbar:
 						for feature in tup:
 							frame[feature] = balanced_data[feature]
 							# also add columns to test set! These are tested on.
-							rest_X[feature] = test_data[feature]
+							rest_X[feature] = rest_data[feature]
 					# the dependent and independent variables of the data frame are now collected
 					# rename and reindex them
 					X = frame.reset_index(drop=True)
 					y = dependent_var.reset_index(drop=True)
-					rest_X = rest_X.reset_index(drop=True)
+					rest_X_unbalanced = rest_X.reset_index(drop=True)
 					print "if nrs not equal, then not balanced (is good):", len(rest_y),sum(rest_y)
+					
+					# copy the unbalanced set and balance it
+					rest_y_balanced = Balance_Data(rest_y,0) #
+					rest_X_balanced = rest_X_unbalanced
 
 					# use X and y to find the optimal parameter settings
 					classifier = Do_grid_search(X,y)

@@ -50,7 +50,13 @@ def Balance_Data(data, dependent):
 	positives = data[(data[dependent]==1)]
 	negatives = data.drop(positives.index).sample(n=len(positives))
 	balanced_data = pd.concat([positives,negatives])
-	return balanced_data	
+	return balanced_data
+	
+def Shuffle_Data(data,dependent):
+	print "Shuffling data..."
+	shuffled_data = data.sample(frac=1)
+	return shuffled_data
+	
 	
 def Do_grid_search(train_X,train_y):
 	""" function needs the X and y parts of the training data."""
@@ -95,8 +101,8 @@ path_out = "C:\Users\sternheimam\Desktop\my-notebook"
 
 #feature_names = ["inactivity","questions","sentences","sentiment","subjectivity","words",
 #                 "sentence mean","word mean", "inactive mean","questions mean","sentiment mean","subjectivity mean"]
-feature_groups = [(3,11),(13,14),(6,7),(9,10,12),(4,5,8)] # inactivity, opinionmining past, opinionmining, textual past, textual
-dependent_variables = [0,1,2]
+feature_groups = [(3,11)]#,(13,14),(6,7),(9,10,12),(4,5,8)] # inactivity, opinionmining past, opinionmining, textual past, textual
+dependent_variables = [0]#,1,2]
 
 # get the data from the files
 data = Get_data(path_in) # all files
@@ -145,11 +151,13 @@ with tqdm(total=93) as pbar:
 					for train_index, test_index in ss.split(rest_X):
 					# split training from testing set
 						train_X,test_X,train_y,test_y = Split_data(train_index,test_index,rest_X,rest_y)
+						
 						# train the best classifier (determined by grid search) on the training part of the rest-data
 						best_classifier.fit(train_X,train_y,eval_metric="auc")
 						# and test its predictive accuracy on the test part of the rest-data
 						y_probabilities = best_classifier.predict_proba(test_X)[:,1] # array containing the probability that dependent_var==1
 						auc = roc_auc_score(test_y,y_probabilities)
+
 						# append the score to a list that will contain all auc scores for this particular 10-fold-run
 						all_auc.append(auc)
 					# 10-fold has now finished. Append all_auc to a list containing all scores for the current dependent variable

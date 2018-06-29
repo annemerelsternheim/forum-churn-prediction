@@ -101,8 +101,8 @@ path_out = "C:\Users\sternheimam\Desktop\my-notebook"
 
 #feature_names = ["inactivity","questions","sentences","sentiment","subjectivity","words",
 #                 "sentence mean","word mean", "inactive mean","questions mean","sentiment mean","subjectivity mean"]
-feature_groups = [(3,11)]#,(13,14),(6,7),(9,10,12),(4,5,8)] # inactivity, opinionmining past, opinionmining, textual past, textual
-dependent_variables = [0]#,1,2]
+feature_groups = [(3,11),(13,14),(6,7),(9,10,12),(4,5,8)] # inactivity, opinionmining past, opinionmining, textual past, textual
+dependent_variables = [0,1,2]
 
 # get the data from the files
 data = Get_data(path_in) # all files
